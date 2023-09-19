@@ -1,0 +1,120 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2709
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww20300\viewh14360\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Sub module2()\
+ 'Loop though all worksheets\
+    For Each ws In Worksheets\
+\
+      'Declare all variables that will be used in the macro\
+        Dim WorksheetName As String\
+        Dim i, j As Long\
+        Dim TickCounter As Long\
+                 TickCounter = 2\
+        Dim OriginalTickerRow As Long\
+        Dim NewTickerRow As Long\
+        Dim PercentChange As Double\
+        Dim GreaterIncrease As Double\
+        Dim GreaterDecrease As Double\
+        Dim GreaterTotVol As Double\
+        \
+        WorksheetName = ws.Name\
+\
+        'Part 1: Create a script that loops through all the stocks for one year and outputs the following: ticker, yearly change, percent change. total stock volume.\
+	\'91Create new columns for the part 1 summary table \
+        	ws.Cells(1, 10).Value = "Ticker"\
+       	ws.Cells(1, 11).Value = "Yearly Change"\
+        	ws.Cells(1, 12).Value = "Percent Change"\
+        	ws.Cells(1, 13).Value = "Total Stock Volume"\
+        \
+        \
+        'Find the last row in the original ticker column\
+            OriginalTickerRow = ws.Cells(Rows.Count, 1).End(xlUp).Row\
+            j = 2\
+\
+        \'91Run a for loop that will check all rows of original ticker data\
+            For i = 2 To OriginalTickerRow\
+	      \'91Create Ticker Symbol\
+                	If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then\
+               	 ws.Cells(TickCounter, 10).Value = ws.Cells(i, 1).Value\
+	      \'91Create yearly change from the opening price at the beginning of a given year to the closing price at the end of that year.\
+               	 ws.Cells(TickCounter, 11).Value = ws.Cells(i, 6).Value - ws.Cells(j, 3).Value\
+                  	  ws.Range("K2:K" & TickCounter).NumberFormat = "General"\
+             		'Conditional formating when yearly change is greater than 0 cells are green if they are less than 0 they are red\
+                    			If ws.Cells(TickCounter, 11).Value >= 0 Then\
+                      		   ws.Cells(TickCounter, 11).Interior.ColorIndex = 4\
+                 		           Else\
+                        		   ws.Cells(TickCounter, 11).Interior.ColorIndex = 3\
+                    			End If\
+                        \
+      'Create Percent Change output for new summary table with opening price at the beginning of a given year to the closing price at the end of that year.\
+            If ws.Cells(j, 3).Value <> 0 Then\
+                PercentChange = (ws.Cells(TickCounter, 11).Value / ws.Cells(j, 3).Value)\
+                    ws.Cells(TickCounter, 12).Value = Format(PercentChange, "Percent")\
+                Else\
+                    ws.Cells(TickCounter, 12).Value = Format(0, "Percent")\
+                End If\
+                    \
+       'Create output for the Total Stock Volume in the new summary table\
+                    ws.Cells(TickCounter, 13).Value = WorksheetFunction.Sum(Range(ws.Cells(j, 7), ws.Cells(i, 7)))\
+                    'Reset the tick counter by offsetting the rows by 1\
+                    TickCounter = TickCounter + 1\
+                    j = i + 1\
+                End If\
+            Next i\
+        \
+ 'Part 2: Add functionality to your script to return the stock witht the "Greatest % increase", "Greatest % Decrease", and "Greatest Total Volume"\
+        \
+        'Create backbone of the summary table\
+            ws.Cells(1, 17).Value = "Ticker"\
+            ws.Cells(1, 18).Value = "Value"\
+            ws.Cells(2, 16).Value = "Greatest % Increase"\
+            ws.Cells(3, 16).Value = "Greatest % Decrease"\
+            ws.Cells(4, 16).Value = "Greatest Total Volume"\
+\
+        'Find the last row in the new ticker column and create a new summary table\
+             NewTickerRow = ws.Cells(Rows.Count, 10).End(xlUp).Row\
+                GreaterIncrease = ws.Cells(2, 12).Value\
+                GreaterDecrease = ws.Cells(2, 12).Value\
+                GreaterTotVol = ws.Cells(2, 13).Value\
+\
+       'For loop that will check all rows of new ticker data summary table that was created in part 1\
+            For i = 2 To NewTickerRow\
+\
+                'Checking for the greatest percent increase\
+                    If ws.Cells(i, 12).Value > GreaterIncrease Then\
+                        GreaterIncrease = ws.Cells(i, 12).Value\
+                        ws.Cells(2, 17).Value = ws.Cells(i, 10).Value\
+                    Else\
+                        GreaterIncrease = GreaterIncrease\
+                    End If\
+\
+                'Checking for the greatest percent increase\
+                    If ws.Cells(i, 12).Value < GreaterDecrease Then\
+                        GreaterDecrease = ws.Cells(i, 12).Value\
+                        ws.Cells(3, 17).Value = ws.Cells(i, 10).Value\
+                    Else\
+                        GreaterDecrease = GreaterDecrease\
+                    End If\
+\
+                 'Checking for the greatest total volume\
+                    If ws.Cells(i, 13).Value > GreaterTotVol Then\
+                        GreaterTotVol = ws.Cells(i, 13).Value\
+                        ws.Cells(4, 17).Value = ws.Cells(i, 10).Value\
+                    Else\
+                        GreaterTotVol = GreaterTotVol\
+                    End If\
+                \
+            'Insert the output and change formatting go output into the part 2 summary table\
+                ws.Cells(2, 18).Value = Format(GreaterIncrease, "Percent")\
+                ws.Cells(3, 18).Value = Format(GreaterDecrease, "Percent")\
+                ws.Cells(4, 18).Value = Format(GreaterTotVol, "Scientific")\
+            Next i\
+\
+    Next ws\
+        \
+End Sub\
+}
